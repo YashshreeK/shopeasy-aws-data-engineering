@@ -32,7 +32,27 @@ products_dyf = glue_context.create_dynamic_frame.from_catalog(
     table_name=PRODUCTS_TABLE,
     transformation_ctx="silver_products_source",
 )
-products_df = products_dyf.toDF()
+# Convert Glue DynamicFrame to Spark DataFrame
+# and align Silver columns with Gold requirements.
+products_df = (
+    products_dyf.toDF()
+    .withColumnRenamed("product_name_lenght", "product_name_length")
+    .withColumnRenamed("product_description_lenght", "product_description_length")
+    .withColumn(
+        "dq_product_valid",
+        F.col("dq_status") == "VALID"
+    )
+    .withColumn(
+        "product_volume_cm3",
+        F.col("product_length_cm")
+        * F.col("product_height_cm")
+        * F.col("product_width_cm")
+    )
+    .withColumn(
+        "has_product_category",
+        F.col("product_category_name").isNotNull()
+    )
+)
 
 # 2. Read Silver category translations
 category_dyf = glue_context.create_dynamic_frame.from_catalog(
