@@ -1,79 +1,168 @@
-# shopeasy-aws-data-engineering
-End-to-end AWS Data Engineering project implementing a Bronze–Silver–Gold architecture using S3, Lambda, Glue, PySpark, Athena, and automated data quality checks.
+# ShopEasy — End-to-End AWS Data Engineering Pipeline
 
-## Overview
+**AWS S3 | AWS Lambda | AWS Glue | PySpark | Amazon Athena | Data Quality | Dimensional Modeling**
 
-ShopEasy processes nine e-commerce datasets—customers, orders, order items, payments, reviews, products, sellers, geolocation, and category translations—from source CSV files into curated Parquet datasets and analytics-ready dimensional models.
+An end-to-end AWS Data Engineering project implementing a **Bronze–Silver–Gold Medallion Architecture** to transform raw e-commerce data into validated, analytics-ready datasets.
 
-**Highlights:** source validation, distributed ETL, data-quality rules, quarantine handling, partitioned Parquet, full/incremental loading, dimensional modeling, SQL reconciliation, and customer analytics.
+The project demonstrates cloud-native data ingestion, distributed ETL processing, data quality validation, dimensional modeling, incremental loading, reconciliation, and business analytics.
 
-## Dataset Used
-This project uses the Brazilian E-Commerce Public Dataset by Olist, available on Kaggle.
+## Project Highlights
 
-The dataset contains approximately 100,000 orders placed through a Brazilian e-commerce marketplace between 2016 and 2018. It includes information about customers, orders, products, sellers, payments, customer reviews, and geographical locations.
+| Metric | Result |
+|---|---:|
+| Source datasets | 9 |
+| Published pipeline scripts | 22 |
+| Silver ETL jobs | 9 |
+| Gold dimensions | 5 |
+| Gold fact tables | 3 |
+| Gold analytical marts | 4 |
+| Silver orders processed | 99,441 |
+| Order-item fact records | 112,650 |
+| Customer 360 records | 96,096 |
+| Customer 360 DQ-valid records | 96,096 |
+| Reconciled item and freight value | $15.84M |
 
-**The dataset consists of nine CSV files:**
-| Dataset | Description |
-| :--- | :--- |
-| **Customers** | Customer identifiers and location information |
-| **Orders** | Order status, purchase timestamps, and delivery dates |
-| **Order Items** | Products, sellers, prices, and freight charges |
-| **Payments** | Payment methods, installments, and transaction values |
-| **Reviews** | Customer ratings and written reviews |
-| **Products** | Product categories, dimensions, and weights |
-| **Sellers** | Seller identifiers and geographical information |
-| **Geolocation** | ZIP codes, cities, states, and geographical coordinates |
-| **Category Translation** | Portuguese-to-English product category mappings |
-
-The source CSV files are ingested into the AWS S3 Bronze layer, processed using AWS Glue and PySpark in the Silver layer, and transformed into dimensional models and analytical marts in the Gold layer.
-
-**Dataset Source:** https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce
 ## Architecture
 
-<img width="1600" height="1986" alt="mermaid-diagram" src="https://github.com/user-attachments/assets/eda3d34b-01d7-4dd5-8e15-33e590d618ab" />
+![ShopEasy AWS Data Engineering Architecture](https://github.com/user-attachments/assets/eda3d34b-01d7-4dd5-8e15-33e590d618ab)
 
+The architecture follows three logical processing layers:
 
-This diagram describes data flow, not a claim that all stages are controlled by a single production orchestrator.
+**Bronze → Silver → Gold → Amazon Athena**
 
-## Pipeline layers
+The diagram illustrates data flow and dependencies. It does not imply that all jobs are managed by a single production orchestrator.
 
-| Layer | Purpose | AWS services |
-|---|---|---|
-| **Bronze** | Preserve original CSVs; validate files and schemas | S3, Lambda, Glue Catalog |
-| **Silver** | Clean, type, deduplicate, validate, quarantine flagged data; store partitioned Parquet | Glue, PySpark, S3 |
-| **Gold** | Create dimensions, facts, and business reporting marts | Glue, PySpark, S3, Athena |
+For more details, see [Architecture Documentation](architecture/README.md).
 
-### Gold datasets
+## Technology Stack
 
-| Type | Tables |
+| Technology | Purpose |
 |---|---|
-| Dimensions | `dim_customer`, `dim_date`, `dim_location`, `dim_product`, `dim_seller` |
-| Facts | `fact_order_items`, `fact_payments`, `fact_reviews` |
-| Marts | `mart_customer_360`, `mart_monthly_sales`, `mart_product_category`, `mart_seller_performance` |
+| Amazon S3 | Raw, cleansed, curated, and quarantine data storage |
+| AWS Lambda | Event-driven Bronze file validation |
+| AWS Glue | Serverless ETL processing |
+| Apache Spark / PySpark | Distributed transformations and aggregations |
+| AWS Glue Data Catalog | Table schemas, metadata, and partitions |
+| Amazon Athena | SQL validation, reconciliation, and analytics |
+| Python | Lambda validation and pipeline development |
+| Parquet / Snappy | Columnar data storage and compression |
+| IAM | Service permissions and access control |
 
-## Validated results
+## Dataset
 
-Results below were checked with Athena during development.
+The project uses the [Brazilian E-Commerce Public Dataset by Olist](https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce), containing approximately 100,000 marketplace orders from 2016–2018.
+
+Nine source CSV datasets are processed:
+
+| Dataset | Description |
+|---|---|
+| Customers | Customer identity and location |
+| Orders | Order status and lifecycle timestamps |
+| Order Items | Purchased products, sellers, prices, and freight |
+| Payments | Payment methods, installments, and values |
+| Reviews | Customer ratings and comments |
+| Products | Product attributes and categories |
+| Sellers | Seller identity and location |
+| Geolocation | ZIP prefixes and geographic coordinates |
+| Category Translation | Portuguese-to-English category mappings |
+
+## Medallion Architecture Implementation
+
+### Bronze Layer — Raw Ingestion and Validation
+
+The Bronze layer preserves source CSV files in Amazon S3.
+
+An S3-triggered AWS Lambda function validates incoming datasets, including expected file names, required columns, and file readability.
+
+**Key capabilities:**
+
+- Event-driven file validation
+- Dataset-specific schema checks
+- Source file integrity checks
+- Validation logging and error handling
+- Glue Data Catalog integration
+
+**Implementation:** [Bronze Layer](bronze/README.md)
+
+### Silver Layer — Data Cleansing and Transformation
+
+The Silver layer uses AWS Glue and PySpark to transform raw CSV datasets into structured Parquet files.
+
+Nine Glue ETL scripts implement dataset-specific transformation and validation logic.
+
+**Key capabilities:**
+
+- Schema standardization and type conversion
+- Null and duplicate handling
+- Business-specific data quality rules
+- Date and timestamp validation
+- Quarantine handling for selected invalid records
+- Snappy-compressed Parquet output
+- Date partitioning for Silver orders
+- Full and incremental processing modes for orders
+- Idempotent overwrite behavior
+
+**Implementation:** [Silver Layer](silver/README.md)
+
+### Gold Layer — Dimensional Modeling and Analytics
+
+The Gold layer transforms Silver datasets into reusable analytical models.
+
+It includes **5 dimensions, 3 fact tables, and 4 business data marts**.
+
+#### Dimensions
+
+| Table | Records |
+|---|---:|
+| `dim_customer` | 96,096 |
+| `dim_date` | 800 |
+| `dim_location` | 19,016 |
+| `dim_product` | 32,951 |
+| `dim_seller` | 3,095 |
+
+#### Fact Tables
+
+| Table | Grain | Records |
+|---|---|---:|
+| `fact_order_items` | Order item | 112,650 |
+| `fact_payments` | Payment sequence per order | 103,886 |
+| `fact_reviews` | Silver review record | 99,224 |
+
+#### Analytical Data Marts
+
+| Data Mart | Business Purpose | Records |
+|---|---|---:|
+| `mart_customer_360` | Customer purchase behavior and segmentation | 96,096 |
+| `mart_monthly_sales` | Monthly sales and delivery performance | 24 |
+| `mart_product_category` | Product category revenue and ranking | 74 |
+| `mart_seller_performance` | Seller revenue, ranking, and delivery performance | 3,095 |
+
+**Implementation:** [Gold Layer](gold/README.md)
+
+## Data Quality and Reconciliation
+
+Data quality checks are implemented across Bronze, Silver, and Gold.
+
+The project validates file schemas, transaction keys, duplicate records, timestamp sequences, dimension relationships, and business metrics.
+
+### Order Reconciliation
 
 | Validation | Result |
 |---|---:|
 | Bronze orders | 99,441 |
-| Silver orders / distinct IDs | 99,441 / 99,441 |
+| Silver orders | 99,441 |
+| Distinct Silver order IDs | 99,441 |
 | Duplicate Silver orders | 0 |
 | Silver purchase-date partitions | 634 |
-| Gold order-item fact rows | 112,650 |
-| Distinct orders in item fact | 98,666 |
-| Gold payment fact rows | 103,886 |
-| Gold review fact rows | 99,224 |
-| Customer 360 rows / unique keys | 96,096 / 96,096 |
-| Customer 360 DQ-valid / invalid | 96,096 / 0 |
-| Customers without item-level purchases | 676 |
+| Distinct orders in `fact_order_items` | 98,666 |
 
-### Why do 775 orders have no item fact rows?
+**Why do 775 orders have no order-item fact records?**
 
-The Silver order-header dataset contains **99,441** distinct orders, while `fact_order_items` represents **98,666**. We verified that the remaining **775** orders have **no corresponding item records in the original Bronze order-items dataset**:
+The source order-header dataset contains 99,441 orders, but only 98,666 have corresponding order-item records.
 
-| Status | Orders without items |
+The remaining 775 were verified against the original Bronze order-items dataset:
+
+| Order Status | Count |
 |---|---:|
 | Unavailable | 603 |
 | Canceled | 164 |
@@ -82,52 +171,81 @@ The Silver order-header dataset contains **99,441** distinct orders, while `fact
 | Shipped | 1 |
 | **Total** | **775** |
 
-This is a source-data/grain distinction, not evidence of missing item records introduced by the Gold transformation.
+This is a source-data and transaction-grain distinction, not a loss introduced by the Gold ETL process.
 
-### Customer 360 business rules
+### Customer 360 Validation
 
-Customer 360 combines `dim_customer` with item-level fact aggregates. Customers with order history but no item-level purchases are retained, have zero purchase revenue, and are assigned **`No Purchases`** rather than `One-Time`. Zero purchases alone do not fail the current DQ rule.
-
-After updating the Glue job and refreshing the catalog, **all 96,096 customers passed the implemented DQ checks**, including the **676** customers without item-level purchases. This does not imply that every possible data-quality issue has been tested.
-
-### Revenue reconciliation
-
-The 24-month monthly-sales mart was reconciled to the item fact:
-
-| Measure | Amount |
+| Validation | Result |
 |---|---:|
-| Item revenue | $13,591,643.70 |
-| Freight | $2,251,909.54 |
-| Total item value plus freight | $15,843,553.24 |
+| Customer records | 96,096 |
+| Unique customer keys | 96,096 |
+| DQ-valid records | 96,096 |
+| DQ-invalid records | 0 |
+| Customers without item-level purchases | 676 |
 
-## Engineering decisions
+Customers without item-level purchases are retained with zero purchase revenue and classified as **No Purchases**.
 
-- **Full and incremental Silver loads:** The orders Glue job supports `FULL` and `INCREMENTAL` modes with appropriate partition-overwrite behavior.
-- **Storage optimization:** Silver orders use date-partitioned, Snappy-compressed Parquet.
-- **Idempotency:** Orders are deduplicated by `order_id` and written using overwrite semantics.
-- **Data quality:** Timestamp-sequence and dataset-specific checks generate DQ flags; flagged records can also be written to quarantine.
-- **Catalog and query layer:** Glue crawlers register tables and partitions for Athena.
-- **Reconciliation:** Source-to-target row counts, uniqueness, key joins, and monetary totals are validated independently.
-- **Business-aware modeling:** Order headers, item transactions, and customer purchase activity are treated as distinct concepts.
+These results reflect the implemented data quality rules rather than an exhaustive guarantee of data correctness.
 
-## Repository layout
+### Revenue Reconciliation
+
+The Monthly Sales Mart was reconciled against the order-item fact table.
+
+| Metric | Amount |
+|---|---:|
+| Gross item revenue | $13,591,643.70 |
+| Freight value | $2,251,909.54 |
+| **Total order-item value** | **$15,843,553.24** |
+
+The reporting period covers 24 calendar months. Revenue metrics represent item prices and freight rather than payment receipts.
+
+## Engineering Design Decisions
+
+**Incremental processing:** The Silver Orders Glue job supports FULL and INCREMENTAL processing modes with partition-overwrite semantics.
+
+**Idempotency:** Order-level deduplication and overwrite-based output handling reduce duplication during reprocessing.
+
+**Data quality:** Source and Gold validation flags preserve visibility into invalid records. Selected Silver jobs also write quarantine outputs.
+
+**Dimensional modeling:** Deterministic surrogate keys, fact-level foreign-key lookups, and an Unknown Location member support reusable analytical joins.
+
+**Historical reporting:** Customer recency is calculated relative to the dataset's latest transaction date rather than the current date.
+
+**Business-aware reconciliation:** Order headers, order items, payments, and reviews are treated as separate analytical grains.
+
+**Storage efficiency:** Parquet and Snappy compression support efficient analytical queries.
+
+## Repository Structure
 
 ```text
 shopeasy-aws-data-engineering/
 ├── README.md
-├── architecture/        # Diagrams and design notes
-├── bronze/              # Bronze validation Lambda and related code
-├── silver/              # Glue / PySpark transformations
-├── gold/                # Dimensions, facts, and analytical marts
-├── orchestration/       # Workflow definitions, if added
-├── sql/
-│   └── validation/      # Athena reconciliation and DQ SQL
-└── docs/                # Data dictionary, runbook, implementation notes
+├── architecture/
+│   ├── README.md
+│   └── shopeasy-architecture.md
+├── bronze/
+│   ├── README.md
+│   └── lambda/
+│       └── bronze_validator.py
+├── silver/
+│   ├── README.md
+│   └── glue/
+│       └── 9 Silver ETL scripts
+└── gold/
+    ├── README.md
+    ├── dimensions/
+    │   └── 5 dimension scripts
+    ├── facts/
+    │   └── 3 fact scripts
+    └── marts/
+        └── 4 analytical mart scripts
 ```
 
-*This is the planned repository structure; directories and code will be added as they are prepared for publication.*
+The repository contains the pipeline code and documentation. SQL validation files, automated orchestration definitions, and deployment infrastructure can be added as future enhancements.
 
-## Example Athena checks
+## Example Athena Validation Queries
+
+**Check Silver order uniqueness:**
 
 ```sql
 SELECT
@@ -136,6 +254,8 @@ SELECT
     COUNT(*) - COUNT(DISTINCT order_id) AS duplicate_orders
 FROM shopeasy_silver_dev.orders;
 ```
+
+**Validate Customer 360:**
 
 ```sql
 SELECT
@@ -149,33 +269,44 @@ SELECT
 FROM shopeasy_gold_dev.mart_customer_360;
 ```
 
-## Reproducing the project
+## Reproducing the Project
 
-This repository documents an AWS implementation rather than offering a one-command deployment.
+This repository documents an AWS implementation rather than providing a one-command deployment.
 
-1. Provision your own S3 bucket and IAM roles with least-privilege permissions.
-2. Obtain source datasets you are authorized to use.
-3. Configure Bronze, Silver, Gold, and Quarantine storage prefixes.
-4. Parameterize resource names, database names, and paths in the scripts.
-5. Run Bronze validation, then Silver ETL, then Gold transformations.
-6. Refresh Glue Catalog tables and partitions.
-7. Run Athena validation queries and reconcile results against your own data.
+1. Create an Amazon S3 bucket and configure the required IAM roles.
+2. Download the Olist datasets from Kaggle.
+3. Configure the Bronze, Silver, Gold, and Quarantine S3 prefixes.
+4. Replace `YOUR_SHOPEASY_BUCKET` and other environment-specific configuration values.
+5. Run Bronze validation and the nine Silver Glue transformations.
+6. Register the resulting datasets in the AWS Glue Data Catalog.
+7. Execute Gold dimension jobs in dependency order, followed by fact tables and data marts.
+8. Refresh Glue metadata and validate outputs using Athena.
 
-**Security:** Do not commit AWS credentials, account IDs, personal information, private infrastructure identifiers, or secrets. Replace account-specific paths with placeholders or configuration variables before publishing.
+See the individual layer READMEs for implementation details.
 
-## Key lessons
+**Security:** AWS credentials, secrets, account IDs, and private infrastructure identifiers should never be committed to this repository.
 
-- **Understand grain:** Order headers without order items cannot appear in an item-grain fact table.
-- **Validate partitions:** A successful Glue run does not prove every historical partition was written and cataloged.
-- **Make DQ business-aware:** A customer with no item-level purchases is not inherently invalid.
-- **Reconcile end to end:** Source counts, fact counts, mart metrics, and DQ outcomes should be independently checked.
+## Key Learning Outcomes
 
-## Status
+This project demonstrates practical experience with:
 
-**Implemented and validated:** Bronze validation, Silver processing, Gold dimensions/facts/marts, and Athena-based reconciliation.
+- AWS-based ETL architecture and data lake development
+- Distributed data processing using PySpark
+- Batch ingestion, validation, and transformation
+- Dimensional data modeling and analytical data marts
+- Incremental processing and idempotent data loads
+- Data quality frameworks and reconciliation
+- SQL-based analytical validation
+- Debugging data inconsistencies across processing layers
 
-**GitHub preparation:** Documentation and code are being reviewed and sanitized before publication.
+## Project Status
+
+**Implemented:** Bronze validation, nine Silver ETL pipelines, five Gold dimensions, three fact tables, four analytical marts, and Athena-based reconciliation.
+
+**Published:** Pipeline scripts, architecture documentation, and Bronze/Silver/Gold layer documentation.
+
+**Potential enhancements:** Automated job orchestration, CI/CD, infrastructure as code, automated testing, and operational monitoring.
 
 ## License
 
-No license selected yet.
+No license has been selected for this repository.
