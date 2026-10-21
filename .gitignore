@@ -218,3 +218,39 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+
+# ShopEasy AWS security and local configuration
+.env.*
+!.env.example
+
+# AWS credentials and local configuration
+.aws/
+aws_credentials
+credentials.json
+secrets.json
+
+# Terraform state and sensitive variables
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+.terraform/
+crash.log
+crash.*.log
+
+# Private keys and certificates
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Local AWS deployment artifacts
+samconfig.toml
+cdk.out/
+
+# Local data extracts
+*.parquet
+*.csv
+*.jsonl
+  
