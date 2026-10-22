@@ -201,7 +201,27 @@ The reporting period covers 24 calendar months. Revenue metrics represent item p
 
 ## Engineering Design Decisions
 
-**Incremental processing:** The Silver Orders Glue job supports FULL and INCREMENTAL processing modes with partition-overwrite semantics.
+**Incremental processing:** The Silver Orders Glue job supports FULL and INCREMENTAL processing modes with partition-overwrite semantics.\
+### Silver Orders Glue Job Parameters
+
+The Silver Orders job requires the following AWS Glue job arguments:
+
+| Argument | Description | Example |
+|---|---|---|
+| `--JOB_NAME` | Glue job name | `shopeasy-silver-orders` |
+| `--process_date` | Purchase date to process | `2018-01-15` |
+| `--load_type` | Processing mode | `FULL` or `INCREMENTAL` |
+
+Example incremental execution:
+
+```text
+--process_date = 2018-01-15
+--load_type = INCREMENTAL
+```
+
+For a full refresh, set `--load_type` to `FULL`. The `--process_date` argument must still be supplied because it is required by the current script.
+
+Configure the S3 bucket placeholder and ensure the Glue execution role has the necessary permissions before running the job.
 
 **Idempotency:** Order-level deduplication and overwrite-based output handling reduce duplication during reprocessing.
 
