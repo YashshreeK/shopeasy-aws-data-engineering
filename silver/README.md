@@ -123,3 +123,11 @@ The Payments, Category Translation, and Geolocation scripts write processed data
 - Most Silver jobs use full overwrites; only Orders implements an incremental loading mode.
 - The public GitHub scripts use example S3 bucket placeholders instead of private account-specific bucket names.
 - AWS Glue Data Catalog tables provide schema metadata for querying Silver datasets using Amazon Athena.
+- S3 and Glue Data Catalog Dependencies
+  The Silver Orders ETL reads Bronze CSV files directly from Amazon S3 and writes partitioned, Snappy-compressed Parquet datasets to Silver and   Quarantine S3 paths.
+
+  - FULL mode uses static overwrite to rebuild the Silver dataset.
+  - INCREMENTAL mode uses dynamic partition overwrite for the selected purchase-date partitions.
+  - The Orders ETL does not require a Bronze Glue Catalog table for its direct S3 read.
+  - After Silver processing, register or refresh the Silver tables and partitions in the AWS Glue Data Catalog before running dependent Gold   jobs.
+  - When no invalid records are found, the quarantine write is skipped. Existing quarantine data may require separate cleanup to avoid retaining stale records.
