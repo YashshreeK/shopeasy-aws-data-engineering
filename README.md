@@ -201,7 +201,7 @@ The reporting period covers 24 calendar months. Revenue metrics represent item p
 
 ## Engineering Design Decisions
 
-**Incremental processing:** The Silver Orders Glue job supports FULL and INCREMENTAL processing modes with partition-overwrite semantics.\
+**Incremental processing:** The Silver Orders Glue job supports FULL and INCREMENTAL processing modes with partition-overwrite semantics.
 ### Silver Orders Glue Job Parameters
 
 The Silver Orders job requires the following AWS Glue job arguments:
